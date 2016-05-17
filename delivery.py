@@ -1,5 +1,6 @@
 import time # for simulated waiting times
 import datetime # for simulated delivery dates
+import random # to simulate 'chance' in delivery times and conditions
 
 class Delivery: 
     """
@@ -27,6 +28,7 @@ class Delivery:
         self.state = "INITIAL"
         self.quitting = False
         self.order_detail_to_change = None # set to value when user requesting change
+        self.state_change_time = 0
         
         # Initiate the messaging with this prompt 
         self.initial_prompt = ('You have ordered %s with %s.\n'
@@ -52,6 +54,14 @@ class Delivery:
         elif self.state == "INITIAL_CORRECTION_CONFIRMED":
             response = self.initial_correction_confirmed(input)
             
+        elif self.state == "ORDER_PLACED":
+            
+            if self.is_state_change_time():
+                print "you got it!"
+            else: 
+                print "nope not yet"
+            
+            
         return response 
         
     def initial(self, input): 
@@ -65,7 +75,7 @@ class Delivery:
                 'Please confirm the following delivery information:\n'
                 '\tNAME: %s\n'
                 '\tADDRESS: %s\n'
-                '\tCONTACT: %s\n'
+                '\tPHONE: %s\n'
                 '\tITEM: %s'
                 ) % (self.order_details['name'], self.order_details['address'], self.order_details['phone'], self.order_details['item'])
         
@@ -83,14 +93,6 @@ class Delivery:
         """ Handles possible responses for the CONFIRMATION state """
 
         if input == "yes":
-            print 'Wonderful! Please look forward to messages in the next few days regarding the progress of your order.'
-            
-            # simulate "waiting" in real life
-            for x in range(5): 
-                print '.'
-                time.sleep(1)
-            
-            self.state = "ORDER_PLACED"
             return self.order_placed()
 
         elif input == "no":
@@ -119,14 +121,61 @@ class Delivery:
                 
     def initial_correction_confirmed(self, input): 
         self.order_details[self.order_detail_to_change] = input
-        return "Great! The \'%s\' field has been changed to \'%s\'." % ( self.order_detail_to_change, input) 
+        
+        print "Great! The \'%s\' field has been changed to \'%s\'." % ( self.order_detail_to_change, input) 
+        
+        return self.order_placed()
                 
     def order_placed(self):
         """ Handles possible responses for the ORDER_PLACED state """
 
-        today = datetime.date.today()
-        return ("Your delivery has been accepted by %s."
-            "The expected date of delivery is %s.") % (self.courier, str(today))
+        self.state = "ORDER_PLACED"
 
+        # simulate time it takes for someone to claim the package for delivery
+        self.set_state_change_time()
+
+        return 'Wonderful! Please look forward to messages in the next few days regarding the progress of your order.'
+
+        # # simulate "waiting" in real life
+        # waiting_time = rand_int(3,5)
+        # for x in range(waiting_time): 
+        #     print '.'
+        #     time.sleep(1)
+        # 
+        # # generate delivery date within 1 to 5 days from current date randomly
+        # today = datetime.date.today()
+        # num_days_later = random.randint(0, 5)
+        # later_date = today + datetime.timedelta(days=num_days_later)
+        # 
+        # print ("Your delivery has been accepted by %s."
+        #     "The expected date of delivery is %s.") % (self.courier, str(later_date))
+        # return self.order_pending()
+
+    # def order_pending(self):
+    #     
+    #     self.state = "ORDER_PENDING"
+    #     
+    #     # 30% of the time, delivery fails 
+    #     if random.random() < 0.3: 
+    #         
+    #     else: 
         
-    
+    def set_state_change_time(self):
+        """ Sets the state change time of an event (i.e., package delivered) to a random amount of time.
+        
+        Allows system to return dynamic responses to users who check on status at any point.
+        """
+        
+        seconds_to_state_change = 5 * random.randint(3, 5)
+        now = datetime.datetime.now()
+        self.state_change_time = now + datetime.timedelta(seconds=seconds_to_state_change)
+        
+    def is_state_change_time(self): 
+        """ Returns boolean indicating if it is time to change the state. """
+        print self.state_change_time
+        now = datetime.datetime.now()
+        print now
+        
+        # return true if current time is after the designated state_change_time
+        return now > self.state_change_time
+
