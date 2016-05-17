@@ -28,7 +28,7 @@ class Delivery:
         self.state = "INITIAL"
         self.quitting = False
         self.order_detail_to_change = None # set to value when user requesting change
-        self.state_change_time = 0
+        self.state_change_time = 0 # by default, the current time will pass 'is_state_change_time' 
         
         # Initiate the messaging with this prompt 
         self.initial_prompt = ('You have ordered %s with %s.\n'
@@ -56,12 +56,15 @@ class Delivery:
             
         elif self.state == "ORDER_PLACED":
             
-            if self.is_state_change_time():
-                print "you got it!"
-            else: 
-                print "nope not yet"
+            if not self.is_state_change_time():
+                print ("Our apologies! Your package has not been assigned just yet. "
+                    "You will be notified shortly about any updates.")         
+                self.wait_for_state_change_time()
             
-            
+            self.state = "ORDER_PENDING"
+            response = self.order_pending()
+                    
+                
         return response 
         
     def initial(self, input): 
@@ -123,47 +126,44 @@ class Delivery:
         self.order_details[self.order_detail_to_change] = input
         
         print "Great! The \'%s\' field has been changed to \'%s\'." % ( self.order_detail_to_change, input) 
-        
         return self.order_placed()
-                
-    def order_placed(self):
-        """ Handles possible responses for the ORDER_PLACED state """
 
+    def order_placed(self): 
         self.state = "ORDER_PLACED"
 
         # simulate time it takes for someone to claim the package for delivery
         self.set_state_change_time()
 
         return 'Wonderful! Please look forward to messages in the next few days regarding the progress of your order.'
+    
+                
+    def order_accepted(self):
+        """ Handles possible responses for the ORDER_PLACED state """
 
-        # # simulate "waiting" in real life
-        # waiting_time = rand_int(3,5)
-        # for x in range(waiting_time): 
-        #     print '.'
-        #     time.sleep(1)
-        # 
-        # # generate delivery date within 1 to 5 days from current date randomly
-        # today = datetime.date.today()
-        # num_days_later = random.randint(0, 5)
-        # later_date = today + datetime.timedelta(days=num_days_later)
-        # 
-        # print ("Your delivery has been accepted by %s."
-        #     "The expected date of delivery is %s.") % (self.courier, str(later_date))
-        # return self.order_pending()
+        # generate delivery date within 1 to 5 days from current date randomly
+        today = datetime.date.today()
+        num_days_later = random.randint(0, 5)
+        later_date = today + datetime.timedelta(days=num_days_later)
+        
+        return ("Your delivery has been accepted by %s."
+            "The expected date of delivery is %s.") % (self.courier, str(later_date))
 
-    # def order_pending(self):
-    #     
-    #     self.state = "ORDER_PENDING"
-    #     
-    #     # 30% of the time, delivery fails 
-    #     if random.random() < 0.3: 
-    #         
-    #     else: 
+    def order_pending(self):
+        
+        self.state = "ORDER_PENDING"
+        return "order pending!!"
+        
+        # # 30% of the time, delivery fails 
+        # if random.random() < 0.3: 
+        #     
+        # else: 
         
     def set_state_change_time(self):
         """ Sets the state change time of an event (i.e., package delivered) to a random amount of time.
         
         Allows system to return dynamic responses to users who check on status at any point.
+        
+        NOTE: make sure this is called in the right place so that the time is not always reset.
         """
         
         seconds_to_state_change = 5 * random.randint(3, 5)
@@ -172,10 +172,16 @@ class Delivery:
         
     def is_state_change_time(self): 
         """ Returns boolean indicating if it is time to change the state. """
-        print self.state_change_time
         now = datetime.datetime.now()
-        print now
         
         # return true if current time is after the designated state_change_time
         return now > self.state_change_time
+        
+    def wait_for_state_change_time(self):
+        while True: 
+            print '.'
+            time.sleep(1)
+            if self.is_state_change_time(): 
+                return
+            
 
