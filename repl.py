@@ -10,11 +10,11 @@ class REPL(cmd.Cmd):
         print '\n', self.delivery.initial_prompt
 
     def default(self, line): 
-        if line == ":quit":
+        response = self.delivery.process_input(line)
+        print response 
+        
+        if self.delivery.quitting:
             return True 
-        else: 
-            response = self.delivery.process_input(line)
-            print response 
             
 if __name__ == '__main__':
     repl = REPL()
