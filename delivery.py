@@ -20,6 +20,7 @@ class Delivery:
         # STATE VARIABLES to keeps track of the delivery process
         self.state = "INITIAL"
         self.quitting = False
+        self.order_detail_to_change = None # set to value when user requesting change
         
         # Initiate the messaging with this prompt 
         self.initial_prompt = ('You have ordered %s with %s.\n'
@@ -40,8 +41,7 @@ class Delivery:
             response = self.confirmation(input)
                     
         elif self.state == "INITIAL_CORRECTION":
-            # TODO: parse initial correction field 
-            response = "Thank you for the correction!"
+            response = self.initial_correction(input)
             
         # elif self.state == "ORDER_PLACED":
             
@@ -50,11 +50,10 @@ class Delivery:
     def initial(self, input): 
         """ Handles possible responses for the INITIAL state """
         
+        # change state to confirmed 
+        self.state = "CONFIRMATION"
+        
         if input == "yes":
-            
-            # change state to confirmed 
-            self.state = "CONFIRMATION"
-            
             return ('Thank you! \n'
                 'Please confirm the following delivery information:\n'
                 '\tNAME: %s\n'
@@ -89,9 +88,29 @@ class Delivery:
 
         elif input == "no":
             #TODO: specify field in two steps 
-            self.state == "INITIAL_CORRECTION"
-            return ('Please respond with the proper information in the following format:\n'
-                '\"FIELD:new_value\"')
+            self.state = "INITIAL_CORRECTION"
+            return 'What field would you like to correct?'
+                
+    def initial_correction(self, input):
+        
+        # store dictionary keys in a set
+        order_details_set = self.order_details.keys()
+        
+        if input in order_details_set: 
+            self.order_detail_to_change = input
+            return "Please enter the correct value for %s:" % input 
+        
+        # input is not one of the appropriate fields 
+        else:
+            response = "The input you selected is invalid. Please enter one of the following:\n" 
+            
+            # print each item in the list of order details
+            for detail in order_details_set: 
+                response += "\'%s\'" % detail
+            return response 
+                
+    # def initial_correction_confirmed(self): 
+        
                 
     def order_placed(self):
         """ Handles possible responses for the ORDER_PLACED state """
