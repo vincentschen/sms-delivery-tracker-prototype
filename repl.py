@@ -2,7 +2,7 @@ import cmd
 from delivery import *
 
 class REPL(cmd.Cmd):
-
+    """Simple read, evaluate, print loop that uses imported Delivery class. to process information."""
     delivery = Delivery()
     prompt = "\n> "
     
