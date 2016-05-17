@@ -4,12 +4,11 @@ from delivery import *
 class REPL(cmd.Cmd):
 
     delivery = Delivery()
-    prompt = "> "
+    prompt = "\n> "
     
     def preloop(self): 
-        print self.delivery.initial_prompt
+        print '\n', self.delivery.initial_prompt
 
-    
     def default(self, line): 
         if line == ":quit":
             return True 
