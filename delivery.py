@@ -2,8 +2,14 @@ import time # for simulated waiting times
 import datetime # for simulated delivery dates
 
 class Delivery: 
-    """This class is used in conjunction with the REPL class to handle all logic 
-    between the user's inputs and the 'delivery process'. """
+    """
+    This class is used in conjunction with the REPL class to handle all logic 
+    between the user's inputs and the 'delivery process'. 
+    
+    How it works: 
+    After the input is processed, change the state so that the REPL can move forward. 
+    
+    """
     
     def __init__(self): 
         """Initializes placeholder and state values for the Delivery prototype. """
@@ -43,7 +49,8 @@ class Delivery:
         elif self.state == "INITIAL_CORRECTION":
             response = self.initial_correction(input)
             
-        # elif self.state == "ORDER_PLACED":
+        elif self.state == "INITIAL_CORRECTION_CONFIRMED":
+            response = self.initial_correction_confirmed(input)
             
         return response 
         
@@ -98,19 +105,21 @@ class Delivery:
         
         if input in order_details_set: 
             self.order_detail_to_change = input
+            self.state = "INITIAL_CORRECTION_CONFIRMED"
             return "Please enter the correct value for %s:" % input 
         
         # input is not one of the appropriate fields 
         else:
-            response = "The input you selected is invalid. Please enter one of the following:\n" 
+            response = "The input you selected is invalid. Please enter one of the following:" 
             
             # print each item in the list of order details
             for detail in order_details_set: 
-                response += "\'%s\'" % detail
+                response += "\n\'%s\'" % detail
             return response 
                 
-    # def initial_correction_confirmed(self): 
-        
+    def initial_correction_confirmed(self, input): 
+        self.order_details[self.order_detail_to_change] = input
+        return "Great! The \'%s\' field has been changed to \'%s\'." % ( self.order_detail_to_change, input) 
                 
     def order_placed(self):
         """ Handles possible responses for the ORDER_PLACED state """
