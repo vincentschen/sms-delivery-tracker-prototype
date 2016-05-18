@@ -5,6 +5,9 @@ import sched # to schedule steate changes (simulating times in which we are wait
 import threading # to run scheduling concurrently
 import sys #for printing on same line #HACK
 
+#TODO: different checkin commands (instead of typitng anything)
+#TODO: error messages for waiting in different states 
+
 class Delivery: 
     """
     This class is used in conjunction with the REPL class to handle all logic 
@@ -90,6 +93,18 @@ class Delivery:
         elif self.state == "ORDER_FAILED_FIXED":
             return self.order_failed_fixed()
                 
+        elif self.state == "ORDER_APPROACHING":
+            return self.order_approaching()
+            
+        elif self.state == "ORDER_ARRIVED":
+            return self.order_arrived()
+            
+        elif self.state == "FEEDBACK":
+            return self.feedback(input)
+            
+        elif self.state == "FEEDBACK_VALIDATION":
+            return self.feedback_validation(input)
+            
         return response 
         
     def initial(self, input): 
@@ -190,7 +205,7 @@ class Delivery:
     def order_pending(self): 
                 
         # simulate failed delivery 30% of the time
-        # if random.random() < 0.3:
+        if random.random() < 0.3:
             # order 'failed'
                     
             # simulate time it takes for delivery to be corrected
@@ -203,10 +218,41 @@ class Delivery:
                 "Your package will be delayed until %s. Please call this number if you have any questions: %s"
                 ) % (self.courier['name'], str(self.delivery_date), str(self.courier['phone']))
         
-        # else: 
-        #     return "succes"
-            
+        else: 
+            return self.order_approaching()
+
+    def order_approaching(self):
+        self.schedule_state_change(4, "ORDER_ARRIVED")
+        minutes_to_arrival = random.randint(5, 30)
+        return ("Your package will arrive in %s minutes. "
+            "If there are any issues, expect a call from %s. "
+            "Might you have any questions, feel free to phone this number: %s."
+            ) % (str(minutes_to_arrival), self.courier['name'], self.courier['phone'])
+
+    def order_arrived(self):
+        self.state = "FEEDBACK"
+        return ("Your order has arrived. Please contact %s by phone: %s.\n"
+        "Once your receive your package, please respond \'confirmed\'!"
+        ) % (self.courier['name'], self.courier['phone'])
+
+    def feedback(self, input):
+        if input == "confirmed":
+            self.state = "FEEDBACK_VALIDATION"
+            return ("Thank you for your patience! Please rate your experience 1 to 5.")
+        else: 
+            return ("Once your receive your package, please respond \'confirmed\'! "
+                "If you have any issues, please call %s.") % self.courier['phone']
+
+    def feedback_validation(self, input):
+        possible_ratings = [1, 2, 3, 4, 5]
+        if int(input) in possible_ratings: 
+            self.quitting = True 
+            return ("We appreciate your feedback! We look forward to serving you next time.")
+        else: 
+            return "Please respond with a value between 1 and 5, inclusive!"
+
     def order_failed_fixed(self): 
+        self.schedule_state_change(3, 'ORDER_APPROACHING')
         return ("We have corrected the delivery issue with your package. "
             "Please expect a a delivery on %s.") % str(self.delivery_date)
         
