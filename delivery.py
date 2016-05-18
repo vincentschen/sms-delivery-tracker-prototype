@@ -3,6 +3,7 @@ import datetime # for simulated delivery dates
 import random # to simulate 'chance' in delivery times and conditions
 import sched # to schedule steate changes (simulating times in which we are waiting)
 import threading # to run scheduling concurrently
+import sys #for printing on same line #HACK
 
 class Delivery: 
     """
@@ -18,13 +19,17 @@ class Delivery:
         """Initializes placeholder and state values for the Delivery prototype. """
         # PLACEHOLDER VALUES for delivery information
         self.app_name = "APP"
-        self.courier = "Sneha"
+        self.courier = {
+            'name': 'Sneha',
+            'phone': 192857159
+        }
         self.order_details = {
             "name": "Vincent",
             "item": "Toothbrush",
             "address": "44 HELLO STREET",
             "phone": 123456889
         }
+        self.delivery_date = None
         
         # STATE VARIABLES to keeps track of the delivery process
         self.state = "INITIAL"
@@ -77,6 +82,13 @@ class Delivery:
             
             else: 
                 response = self.order_accepted()
+                
+        elif self.state == "ORDER_PENDING":
+            self.schedulerThread.join()
+            return self.order_pending()
+            
+        elif self.state == "ORDER_FAILED_FIXED":
+            return self.order_failed_fixed()
                 
         return response 
         
@@ -158,30 +170,49 @@ class Delivery:
     def order_accepted(self):
         """ Handles possible responses for the ORDER_PLACED state """
 
-        print "in order_accepted"
         self.state = "ORDER_ACCEPTED"
 
-        # generate delivery date within 1 to 5 days from current date randomly
-        today = datetime.date.today()
-        num_days_later = random.randint(0, 5)
-        later_date = today + datetime.timedelta(days=num_days_later)
+        # simulate time it takes for someone to claim the package for delivery
+        seconds_to_state_change = 3 * random.randint(3, 5)
+        self.schedule_state_change(seconds_to_state_change, "ORDER_PENDING")
+
+        self.delivery_date = self.get_random_later_date(datetime.date.today())
         
         return ("Your delivery has been accepted by %s. "
-            "The expected date of delivery is %s.") % (self.courier, str(later_date))
+            "The expected date of delivery is %s.") % (self.courier['name'], str(self.delivery_date))
+        
+    def get_random_later_date(self, curr_date):
+        """ Generate delivery date within 1 to 5 days from current date randomly """
+
+        num_days_later = random.randint(1, 5)
+        return curr_date + datetime.timedelta(days=num_days_later)
         
     def order_pending(self): 
-        
-        self.state = "ORDER_PENDING"
-        
+                
         # simulate failed delivery 30% of the time
-        if random.random() < 0.3:
-            return "your delivery failed"
-        else: 
-            return "succes"
+        # if random.random() < 0.3:
+            # order 'failed'
+                    
+            # simulate time it takes for delivery to be corrected
+            seconds_to_state_change = 3 * random.randint(3, 5)
+            self.schedule_state_change(seconds_to_state_change, "ORDER_FAILED_FIXED")
+            
+            self.delivery_date = self.get_random_later_date(self.delivery_date)
+            return ("Unfortunately, there are issues with your delivery. "
+                "%s noticed that your package was damaged, so we have stopped the delivery process.\n"
+                "Your package will be delayed until %s. Please call this number if you have any questions: %s"
+                ) % (self.courier['name'], str(self.delivery_date), str(self.courier['phone']))
+        
+        # else: 
+        #     return "succes"
+            
+    def order_failed_fixed(self): 
+        return ("We have corrected the delivery issue with your package. "
+            "Please expect a a delivery on %s.") % str(self.delivery_date)
         
     def schedule_state_change(self, delay_in_seconds, new_state): 
         self.is_waiting = True
-        self.sched.enter(delay_in_seconds, 1, self.change_state, (new_state,))
+        self.sched.enter(5, 1, self.change_state, (new_state,))
         
         # spawn a thread to run in background
         self.schedulerThread = threading.Thread(target=self.sched.run) #TODO: currently no call to join
@@ -190,4 +221,5 @@ class Delivery:
     def change_state(self, new_state):
         self.is_waiting = False
         self.state = new_state
-        print "state changed to %s" % new_state
+        sys.stdout.write("Delivery updated!\n> ") #HACK: prompts input, but not actually in REPL
+        sys.stdout.flush() #use stdout for same line in HACK
