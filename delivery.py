@@ -72,7 +72,7 @@ class Delivery:
             
             if self.is_waiting:
                 response = ("Our apologies! Your package has not been assigned just yet. "
-                    "You will be notified shortly about any updates.")         
+                    "Please check back shortly for updates!")         
                 
             else: 
                 response = self.order_placed()
@@ -80,8 +80,8 @@ class Delivery:
         elif self.state == "ORDER_ACCEPTED":  
                           
             if self.is_waiting: 
-                response = ("The status of your package has not been updated yet! "
-                    "We will notify you when we have any new information.")
+                response = ("The status of your package has not been updated yet. "
+                    "Please check back shortly for updates!")
             
             else: 
                 response = self.order_accepted()
@@ -94,16 +94,21 @@ class Delivery:
             return self.order_failed_fixed()
                 
         elif self.state == "ORDER_APPROACHING":
+            if self.is_waiting: 
+                return ("Your package is in transit. "
+                    "Please check back shortly for updates!")
+                
             return self.order_approaching()
             
         elif self.state == "ORDER_ARRIVED":
+            self.schedulerThread.join()
             return self.order_arrived()
+            
+        elif self.state == "ARRIVAL_CONFIRMATION":
+            return self.arrival_confirmation(input)
             
         elif self.state == "FEEDBACK":
             return self.feedback(input)
-            
-        elif self.state == "FEEDBACK_VALIDATION":
-            return self.feedback_validation(input)
             
         return response 
         
@@ -135,7 +140,7 @@ class Delivery:
     def confirmation(self, input): 
         """ Handles possible responses for the CONFIRMATION state """
 
-        if input == "yes" or input == "correct":
+        if input == "yes" or input == "correct" or "confirm":
             return self.order_placed()
 
         elif input == "no" or input == "incorrect":
@@ -179,7 +184,7 @@ class Delivery:
         seconds_to_state_change = 3 * random.randint(3, 5)
         self.schedule_state_change(seconds_to_state_change, "ORDER_ACCEPTED")
 
-        return ('Wonderful! Please look forward to messages in the next few days regarding the progress of your order.'
+        return ('Wonderful! Please look forward to messages in the next few days regarding the progress of your order. '
             '[To check on status, please respond to this number with any text.]')
                 
     def order_accepted(self):
@@ -196,17 +201,15 @@ class Delivery:
         return ("Your delivery has been accepted by %s. "
             "The expected date of delivery is %s.") % (self.courier['name'], str(self.delivery_date))
         
-    def get_random_later_date(self, curr_date):
-        """ Generate delivery date within 1 to 5 days from current date randomly """
-
-        num_days_later = random.randint(1, 5)
-        return curr_date + datetime.timedelta(days=num_days_later)
+    def order_failed_fixed(self): 
+        self.schedule_state_change(3, 'ORDER_APPROACHING')
+        return ("We have corrected the delivery issue with your package. "
+            "Please expect a a delivery on %s.") % str(self.delivery_date)
         
     def order_pending(self): 
                 
-        # simulate failed delivery 30% of the time
-        if random.random() < 0.3:
-            # order 'failed'
+        # simulate failed delivery 50% of the time for demo's sake
+        if random.random() < 0.5: # order failed
                     
             # simulate time it takes for delivery to be corrected
             seconds_to_state_change = 3 * random.randint(3, 5)
@@ -218,11 +221,12 @@ class Delivery:
                 "Your package will be delayed until %s. Please call this number if you have any questions: %s"
                 ) % (self.courier['name'], str(self.delivery_date), str(self.courier['phone']))
         
-        else: 
+        else: # order succeeded
             return self.order_approaching()
 
     def order_approaching(self):
         self.schedule_state_change(4, "ORDER_ARRIVED")
+        
         minutes_to_arrival = random.randint(5, 30)
         return ("Your package will arrive in %s minutes. "
             "If there are any issues, expect a call from %s. "
@@ -230,32 +234,31 @@ class Delivery:
             ) % (str(minutes_to_arrival), self.courier['name'], self.courier['phone'])
 
     def order_arrived(self):
-        self.state = "FEEDBACK"
+        
+        self.state = "ARRIVAL_CONFIRMATION" #set next state
+        
         return ("Your order has arrived. Please contact %s by phone: %s.\n"
         "Once your receive your package, please respond \'confirmed\'!"
         ) % (self.courier['name'], self.courier['phone'])
 
-    def feedback(self, input):
+    def arrival_confirmation(self, input):
         if input == "confirmed":
-            self.state = "FEEDBACK_VALIDATION"
+            self.state = "FEEDBACK" #set next state 
             return ("Thank you for your patience! Please rate your experience 1 to 5.")
         else: 
             return ("Once your receive your package, please respond \'confirmed\'! "
                 "If you have any issues, please call %s.") % self.courier['phone']
 
-    def feedback_validation(self, input):
+    def feedback(self, input):
         possible_ratings = [1, 2, 3, 4, 5]
-        if int(input) in possible_ratings: 
+        if int(input) in possible_ratings: # validate rating input
             self.quitting = True 
             return ("We appreciate your feedback! We look forward to serving you next time.")
         else: 
             return "Please respond with a value between 1 and 5, inclusive!"
 
-    def order_failed_fixed(self): 
-        self.schedule_state_change(3, 'ORDER_APPROACHING')
-        return ("We have corrected the delivery issue with your package. "
-            "Please expect a a delivery on %s.") % str(self.delivery_date)
-        
+# UTILITY FUNCTIONS (for state management, time management)
+
     def schedule_state_change(self, delay_in_seconds, new_state): 
         self.is_waiting = True
         self.sched.enter(5, 1, self.change_state, (new_state,))
@@ -267,5 +270,14 @@ class Delivery:
     def change_state(self, new_state):
         self.is_waiting = False
         self.state = new_state
-        sys.stdout.write("Delivery updated!\n> ") #HACK: prompts input, but not actually in REPL
+        sys.stdout.write("Delivery updated!\n"
+        "Please respond to this number with any text to view your status."
+        "\n> ") #HACK: prompts input, but not actually in REPL
         sys.stdout.flush() #use stdout for same line in HACK
+        
+    def get_random_later_date(self, curr_date):
+        """ Generate delivery date within 1 to 5 days from current date randomly """
+
+        num_days_later = random.randint(1, 5)
+        return curr_date + datetime.timedelta(days=num_days_later)
+        
