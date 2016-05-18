@@ -2,6 +2,7 @@ import time # for simulated waiting times
 import datetime # for simulated delivery dates
 import random # to simulate 'chance' in delivery times and conditions
 import sched # to schedule steate changes (simulating times in which we are waiting)
+import threading # to run scheduling concurrently
 
 class Delivery: 
     """
@@ -67,17 +68,17 @@ class Delivery:
                     "You will be notified shortly about any updates.")         
                 
             else: 
-                self.wait_for_state_change_time()
                 response = self.order_accepted()
                     
-        elif self.state == "ORDER_ACCEPTED":                
-            if not self.is_state_change_time():
-                print ("The status of your package has not been updated yet! "
+        elif self.state == "ORDER_ACCEPTED":  
+            self.schedulerThread.join()
+                          
+            if self.is_waiting: 
+                response = ("The status of your package has not been updated yet! "
                     "We will notify you when we have any new information.")
             
-            self.wait_for_state_change_time()
-            
-            response = self.order_pending()
+            else: 
+                response = self.order_pending()
                 
         return response 
         
@@ -151,7 +152,7 @@ class Delivery:
         self.state = "ORDER_PLACED"
 
         # simulate time it takes for someone to claim the package for delivery
-        seconds_to_state_change = random.randint(3, 5)
+        seconds_to_state_change = 3 * random.randint(3, 5)
         self.schedule_state_change(seconds_to_state_change, "ORDER_ACCEPTED")
 
         return ('Wonderful! Please look forward to messages in the next few days regarding the progress of your order.'
@@ -186,12 +187,16 @@ class Delivery:
     def schedule_state_change(self, delay_in_seconds, new_state): 
         self.is_waiting = True
         self.sched.enter(delay_in_seconds, 1, self.change_state, (new_state,))
-        self.sched.run()
+        
+        # spawn a thread to run in background
+        self.schedulerThread = threading.Thread(target=self.sched.run)
+        self.schedulerThread.start()
         
     def change_state(self, new_state):
-        print "state changed to %s" % new_state
         self.is_waiting = False
         self.state = new_state
+        print "state changed to %s" % new_state
+
         
         
     # def set_state_change_time(self):
