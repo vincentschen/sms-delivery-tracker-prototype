@@ -34,7 +34,6 @@ class Delivery:
 
         # instance of scheduler 
         self.sched = sched.scheduler(time.time, time.sleep)
-
         
         # Initiate the messaging with this prompt 
         self.initial_prompt = ('You have ordered %s with %s.\n'
@@ -113,7 +112,6 @@ class Delivery:
             return self.order_placed()
 
         elif input == "no" or input == "incorrect":
-            #TODO: specify field in two steps 
             self.state = "INITIAL_CORRECTION"
             return 'What field would you like to correct?'
             
@@ -155,7 +153,7 @@ class Delivery:
         self.schedule_state_change(seconds_to_state_change, "ORDER_ACCEPTED")
 
         return ('Wonderful! Please look forward to messages in the next few days regarding the progress of your order.'
-            '[To check on status, please respond to this number with any text.]') #TODO: handling 'checkin' commands 
+            '[To check on status, please respond to this number with any text.]')
                 
     def order_accepted(self):
         """ Handles possible responses for the ORDER_PLACED state """
@@ -186,47 +184,10 @@ class Delivery:
         self.sched.enter(delay_in_seconds, 1, self.change_state, (new_state,))
         
         # spawn a thread to run in background
-        self.schedulerThread = threading.Thread(target=self.sched.run)
+        self.schedulerThread = threading.Thread(target=self.sched.run) #TODO: currently no call to join
         self.schedulerThread.start()
         
     def change_state(self, new_state):
         self.is_waiting = False
         self.state = new_state
         print "state changed to %s" % new_state
-
-        
-        
-    # def set_state_change_time(self):
-    #     """ Sets the state change time of an event (i.e., package delivered) to a random amount of time.
-    #     
-    #     Allows system to return dynamic responses to users who check on status at any point.
-    #     
-    #     NOTE: make sure this is called in the right place so that the time is not always reset.
-    #     """
-    #     
-    #     seconds_to_state_change = 3 * random.randint(3, 5)
-    #     now = datetime.datetime.now()
-    #     self.state_change_time = now + datetime.timedelta(seconds=seconds_to_state_change)
-    #     
-    # def is_state_change_time(self): 
-    #     """ Returns boolean indicating if it is time to change the state. """
-    #     now = datetime.datetime.now()
-    #     
-    #     # return true if current time is after the designated state_change_time
-    #     return now > self.state_change_time
-    #     
-    # def wait_for_state_change_time(self):
-    #     # A HACK to work around the REPL system 
-    #     # Triggers the next state change without having to manufacture a false input  
-    #             
-    #     """ Waits until the state_change_time to proceed. """ 
-    #     
-    #     while True: 
-    # 
-    #         print '.'
-    #         time.sleep(0.5)
-    #         if self.is_state_change_time():
-    #             return 
-
-            
-
