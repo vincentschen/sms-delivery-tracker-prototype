@@ -59,11 +59,18 @@ class Delivery:
             if not self.is_state_change_time():
                 print ("Our apologies! Your package has not been assigned just yet. "
                     "You will be notified shortly about any updates.")         
-                self.wait_for_state_change_time()
-            
-            self.state = "ORDER_PENDING"
-            response = self.order_pending()
+                
+            self.wait_for_state_change_time()
+            response = self.order_accepted()
                     
+        elif self.state == "ORDER_ACCEPTED":                
+            if not self.is_state_change_time():
+                print ("The status of your package has not been updated yet! "
+                    "We will notify you when we have any new information.")
+            
+            self.wait_for_state_change_time()
+            
+            response = self.order_pending()
                 
         return response 
         
@@ -95,13 +102,16 @@ class Delivery:
     def confirmation(self, input): 
         """ Handles possible responses for the CONFIRMATION state """
 
-        if input == "yes":
+        if input == "yes" or input == "correct":
             return self.order_placed()
 
-        elif input == "no":
+        elif input == "no" or input == "incorrect":
             #TODO: specify field in two steps 
             self.state = "INITIAL_CORRECTION"
             return 'What field would you like to correct?'
+            
+        else: 
+            return "Please response with \'correct\' or \'incorrect\' to confirm your delivery information."
                 
     def initial_correction(self, input):
         
@@ -129,34 +139,41 @@ class Delivery:
         return self.order_placed()
 
     def order_placed(self): 
+        """ Indicate an order has been properly placed into the system. """ 
+        
         self.state = "ORDER_PLACED"
 
         # simulate time it takes for someone to claim the package for delivery
         self.set_state_change_time()
 
-        return 'Wonderful! Please look forward to messages in the next few days regarding the progress of your order.'
-    
+        return ('Wonderful! Please look forward to messages in the next few days regarding the progress of your order.'
+            '[To check on status, please respond to this number with any text.]') #TODO: handling 'checkin' commands 
                 
     def order_accepted(self):
         """ Handles possible responses for the ORDER_PLACED state """
+
+        self.state = "ORDER_ACCEPTED"
+
+        # simulate time it takes for delivery to arrive 
+        self.set_state_change_time()
 
         # generate delivery date within 1 to 5 days from current date randomly
         today = datetime.date.today()
         num_days_later = random.randint(0, 5)
         later_date = today + datetime.timedelta(days=num_days_later)
         
-        return ("Your delivery has been accepted by %s."
+        return ("Your delivery has been accepted by %s. "
             "The expected date of delivery is %s.") % (self.courier, str(later_date))
-
-    def order_pending(self):
+        
+    def order_pending(self): 
         
         self.state = "ORDER_PENDING"
-        return "order pending!!"
         
-        # # 30% of the time, delivery fails 
-        # if random.random() < 0.3: 
-        #     
-        # else: 
+        # simulate failed delivery 30% of the time
+        if random.random() < 0.3:
+            return "your delivery failed"
+        else: 
+            return "succes"
         
     def set_state_change_time(self):
         """ Sets the state change time of an event (i.e., package delivered) to a random amount of time.
@@ -166,7 +183,7 @@ class Delivery:
         NOTE: make sure this is called in the right place so that the time is not always reset.
         """
         
-        seconds_to_state_change = 5 * random.randint(3, 5)
+        seconds_to_state_change = 3 * random.randint(3, 5)
         now = datetime.datetime.now()
         self.state_change_time = now + datetime.timedelta(seconds=seconds_to_state_change)
         
@@ -178,10 +195,17 @@ class Delivery:
         return now > self.state_change_time
         
     def wait_for_state_change_time(self):
+        # A HACK to work around the REPL system 
+        # Triggers the next state change without having to manufacture a false input  
+                
+        """ Waits until the state_change_time to proceed. """ 
+        
         while True: 
+
             print '.'
-            time.sleep(1)
-            if self.is_state_change_time(): 
-                return
+            time.sleep(0.5)
+            if self.is_state_change_time():
+                return 
+
             
 
