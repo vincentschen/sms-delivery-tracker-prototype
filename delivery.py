@@ -70,7 +70,7 @@ class Delivery:
             
         elif self.state == "ORDER_PLACED":
             
-            if self.is_waiting:
+            if self.is_waiting: # state has not changed yet
                 response = ("Our apologies! Your package has not been assigned just yet. "
                     "Please check back shortly for updates!")         
                 
@@ -79,36 +79,40 @@ class Delivery:
                     
         elif self.state == "ORDER_ACCEPTED":  
                           
-            if self.is_waiting: 
+            if self.is_waiting: # state has not changed yet
                 response = ("The status of your package has not been updated yet. "
                     "Please check back shortly for updates!")
             
             else: 
+                self.schedulerThread.join()
                 response = self.order_accepted()
                 
         elif self.state == "ORDER_PENDING":
             self.schedulerThread.join()
-            return self.order_pending()
+            response = self.order_pending()
             
         elif self.state == "ORDER_FAILED_FIXED":
-            return self.order_failed_fixed()
+            self.schedulerThread.join()
+            response = self.order_failed_fixed()
                 
         elif self.state == "ORDER_APPROACHING":
             if self.is_waiting: 
-                return ("Your package is in transit. "
+                response = ("Your package is in transit. "
                     "Please check back shortly for updates!")
-                
-            return self.order_approaching()
+            
+            else: 
+                self.schedulerThread.join()
+                response = self.order_approaching()
             
         elif self.state == "ORDER_ARRIVED":
             self.schedulerThread.join()
-            return self.order_arrived()
+            response = self.order_arrived()
             
         elif self.state == "ARRIVAL_CONFIRMATION":
-            return self.arrival_confirmation(input)
+            response = self.arrival_confirmation(input)
             
         elif self.state == "FEEDBACK":
-            return self.feedback(input)
+            response = self.feedback(input)
             
         return response 
         
@@ -201,16 +205,11 @@ class Delivery:
         return ("Your delivery has been accepted by %s. "
             "The expected date of delivery is %s.") % (self.courier['name'], str(self.delivery_date))
         
-    def order_failed_fixed(self): 
-        self.schedule_state_change(3, 'ORDER_APPROACHING')
-        return ("We have corrected the delivery issue with your package. "
-            "Please expect a a delivery on %s.") % str(self.delivery_date)
-        
     def order_pending(self): 
                 
         # simulate failed delivery 50% of the time for demo's sake
         if random.random() < 0.5: # order failed
-                    
+            
             # simulate time it takes for delivery to be corrected
             seconds_to_state_change = 3 * random.randint(3, 5)
             self.schedule_state_change(seconds_to_state_change, "ORDER_FAILED_FIXED")
@@ -223,6 +222,11 @@ class Delivery:
         
         else: # order succeeded
             return self.order_approaching()
+
+    def order_failed_fixed(self): 
+        self.schedule_state_change(3, 'ORDER_APPROACHING')
+        return ("We have corrected the delivery issue with your package. "
+            "Please expect a a delivery on %s.") % str(self.delivery_date)
 
     def order_approaching(self):
         self.schedule_state_change(4, "ORDER_ARRIVED")
