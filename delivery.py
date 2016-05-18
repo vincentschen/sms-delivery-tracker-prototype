@@ -68,17 +68,16 @@ class Delivery:
                     "You will be notified shortly about any updates.")         
                 
             else: 
-                response = self.order_accepted()
+                response = self.order_placed()
                     
         elif self.state == "ORDER_ACCEPTED":  
-            self.schedulerThread.join()
                           
             if self.is_waiting: 
                 response = ("The status of your package has not been updated yet! "
                     "We will notify you when we have any new information.")
             
             else: 
-                response = self.order_pending()
+                response = self.order_accepted()
                 
         return response 
         
@@ -161,10 +160,8 @@ class Delivery:
     def order_accepted(self):
         """ Handles possible responses for the ORDER_PLACED state """
 
+        print "in order_accepted"
         self.state = "ORDER_ACCEPTED"
-
-        # simulate time it takes for delivery to arrive 
-        self.set_state_change_time()
 
         # generate delivery date within 1 to 5 days from current date randomly
         today = datetime.date.today()
