@@ -1,6 +1,7 @@
 import time # for simulated waiting times
 import datetime # for simulated delivery dates
 import random # to simulate 'chance' in delivery times and conditions
+import sched # to schedule steate changes (simulating times in which we are waiting)
 
 class Delivery: 
     """
@@ -28,11 +29,16 @@ class Delivery:
         self.state = "INITIAL"
         self.quitting = False
         self.order_detail_to_change = None # set to value when user requesting change
-        self.state_change_time = 0 # by default, the current time will pass 'is_state_change_time' 
+        self.is_wating = False # boolean to indicate if currently waiting for state change
+
+        # instance of scheduler 
+        self.sched = sched.scheduler(time.time, time.sleep)
+
         
         # Initiate the messaging with this prompt 
         self.initial_prompt = ('You have ordered %s with %s.\n'
             'Do you recognize this purchase?') % (self.order_details['name'], self.app_name)    
+
     
     def process_input(self, input): 
         """ Handles all input in the REPL. """ 
@@ -56,12 +62,13 @@ class Delivery:
             
         elif self.state == "ORDER_PLACED":
             
-            if not self.is_state_change_time():
-                print ("Our apologies! Your package has not been assigned just yet. "
+            if self.is_waiting:
+                response = ("Our apologies! Your package has not been assigned just yet. "
                     "You will be notified shortly about any updates.")         
                 
-            self.wait_for_state_change_time()
-            response = self.order_accepted()
+            else: 
+                self.wait_for_state_change_time()
+                response = self.order_accepted()
                     
         elif self.state == "ORDER_ACCEPTED":                
             if not self.is_state_change_time():
@@ -144,7 +151,8 @@ class Delivery:
         self.state = "ORDER_PLACED"
 
         # simulate time it takes for someone to claim the package for delivery
-        self.set_state_change_time()
+        seconds_to_state_change = random.randint(3, 5)
+        self.schedule_state_change(seconds_to_state_change, "ORDER_ACCEPTED")
 
         return ('Wonderful! Please look forward to messages in the next few days regarding the progress of your order.'
             '[To check on status, please respond to this number with any text.]') #TODO: handling 'checkin' commands 
@@ -175,37 +183,48 @@ class Delivery:
         else: 
             return "succes"
         
-    def set_state_change_time(self):
-        """ Sets the state change time of an event (i.e., package delivered) to a random amount of time.
+    def schedule_state_change(self, delay_in_seconds, new_state): 
+        self.is_waiting = True
+        self.sched.enter(delay_in_seconds, 1, self.change_state, (new_state,))
+        self.sched.run()
         
-        Allows system to return dynamic responses to users who check on status at any point.
+    def change_state(self, new_state):
+        print "state changed to %s" % new_state
+        self.is_waiting = False
+        self.state = new_state
         
-        NOTE: make sure this is called in the right place so that the time is not always reset.
-        """
         
-        seconds_to_state_change = 3 * random.randint(3, 5)
-        now = datetime.datetime.now()
-        self.state_change_time = now + datetime.timedelta(seconds=seconds_to_state_change)
-        
-    def is_state_change_time(self): 
-        """ Returns boolean indicating if it is time to change the state. """
-        now = datetime.datetime.now()
-        
-        # return true if current time is after the designated state_change_time
-        return now > self.state_change_time
-        
-    def wait_for_state_change_time(self):
-        # A HACK to work around the REPL system 
-        # Triggers the next state change without having to manufacture a false input  
-                
-        """ Waits until the state_change_time to proceed. """ 
-        
-        while True: 
-
-            print '.'
-            time.sleep(0.5)
-            if self.is_state_change_time():
-                return 
+    # def set_state_change_time(self):
+    #     """ Sets the state change time of an event (i.e., package delivered) to a random amount of time.
+    #     
+    #     Allows system to return dynamic responses to users who check on status at any point.
+    #     
+    #     NOTE: make sure this is called in the right place so that the time is not always reset.
+    #     """
+    #     
+    #     seconds_to_state_change = 3 * random.randint(3, 5)
+    #     now = datetime.datetime.now()
+    #     self.state_change_time = now + datetime.timedelta(seconds=seconds_to_state_change)
+    #     
+    # def is_state_change_time(self): 
+    #     """ Returns boolean indicating if it is time to change the state. """
+    #     now = datetime.datetime.now()
+    #     
+    #     # return true if current time is after the designated state_change_time
+    #     return now > self.state_change_time
+    #     
+    # def wait_for_state_change_time(self):
+    #     # A HACK to work around the REPL system 
+    #     # Triggers the next state change without having to manufacture a false input  
+    #             
+    #     """ Waits until the state_change_time to proceed. """ 
+    #     
+    #     while True: 
+    # 
+    #         print '.'
+    #         time.sleep(0.5)
+    #         if self.is_state_change_time():
+    #             return 
 
             
 
