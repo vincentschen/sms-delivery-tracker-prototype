@@ -52,7 +52,6 @@ class Delivery:
         """ Handles all input in the REPL. """ 
 
         response = ""
-        
         # make inputs case-insensitive 
         input = input.lower()
         
@@ -144,7 +143,7 @@ class Delivery:
     def confirmation(self, input): 
         """ Handles possible responses for the CONFIRMATION state """
 
-        if input == "yes" or input == "correct" or "confirm":
+        if input == "yes" or input == "correct" or input == "confirm":
             return self.order_placed()
 
         elif input == "no" or input == "incorrect":
