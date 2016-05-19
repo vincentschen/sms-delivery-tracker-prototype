@@ -224,12 +224,12 @@ class Delivery:
             return self.order_approaching()
 
     def order_failed_fixed(self): 
-        self.schedule_state_change(3, 'ORDER_APPROACHING')
+        self.schedule_state_change(15, 'ORDER_APPROACHING')
         return ("We have corrected the delivery issue with your package. "
             "Please expect a a delivery on %s.") % str(self.delivery_date)
 
     def order_approaching(self):
-        self.schedule_state_change(4, "ORDER_ARRIVED")
+        self.schedule_state_change(5, "ORDER_ARRIVED")
         
         minutes_to_arrival = random.randint(5, 30)
         return ("Your package will arrive in %s minutes. "
