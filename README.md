@@ -1,5 +1,7 @@
 # Overview
-This chat-based interface is a prototype for a potential delivery-tracking system. 
+This chat-based interface is a prototype for a delivery-tracking system. 
+
+The command line functions as an SMS text interface -- where automated responses are incoming messages and user input are outbound messages.  
 
 # Features 
 This prototype tests the following user interactions: 

@@ -45,7 +45,7 @@ class Delivery:
         
         # Initiate the messaging with this prompt 
         self.initial_prompt = ('You have ordered %s with %s.\n'
-            'Do you recognize this purchase?') % (self.order_details['name'], self.app_name)    
+            'Do you recognize this purchase? [yes/no]') % (self.order_details['name'], self.app_name)    
 
     
     def process_input(self, input): 
@@ -123,7 +123,7 @@ class Delivery:
         
         if input == "yes":
             return ('Thank you! \n'
-                'Please confirm the following delivery information:\n'
+                'Is the following delivery information correct? [yes/no]\n'
                 '\tNAME: %s\n'
                 '\tADDRESS: %s\n'
                 '\tPHONE: %s\n'
