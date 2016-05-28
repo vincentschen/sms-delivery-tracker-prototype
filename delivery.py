@@ -27,7 +27,7 @@ class Delivery:
         }
         self.order_details = {
             "name": "Vincent",
-            "item": "Toothbrush",
+            "item": "Lenovo Laptop",
             "address": "4 Main Road",
             "phone": '+27 081 123 4567'
         }
@@ -43,8 +43,8 @@ class Delivery:
         self.sched = sched.scheduler(time.time, time.sleep)
         
         # Initiate the messaging with this prompt 
-        self.initial_prompt = ('You have ordered %s with %s.\n'
-            'Do you recognize this purchase? [yes/no]') % (self.order_details['name'], self.app_name)    
+        self.initial_prompt = ('You have ordered \"%s\" with %s.\n'
+            'Do you recognize this purchase? [yes/no]') % (self.order_details['item'], self.app_name)    
 
     
     def process_input(self, input): 
@@ -174,8 +174,15 @@ class Delivery:
     def initial_correction_confirmed(self, input): 
         self.order_details[self.order_detail_to_change] = input
         
-        print "Great! The \'%s\' field has been changed to \'%s\'." % ( self.order_detail_to_change, input) 
-        return self.order_placed()
+        self.state = "CONFIRMATION"
+        return ("Great! The \'%s\' field has been changed to \'%s\'.\n\n"
+            'Is the following delivery information correct? [yes/no]\n'
+            '\tNAME: %s\n'
+            '\tADDRESS: %s\n'
+            '\tPHONE: %s\n'
+            '\tITEM: %s'
+            ) % (self.order_detail_to_change, input, self.order_details['name'], self.order_details['address'], self.order_details['phone'], self.order_details['item'])
+        # return self.order_placed()
 
     def order_placed(self): 
         """ Indicate an order has been properly placed into the system. """ 
