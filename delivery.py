@@ -4,6 +4,7 @@ import random # to simulate 'chance' in delivery times and conditions
 import sched # to schedule steate changes (simulating times in which we are waiting)
 import threading # to run scheduling concurrently
 import sys #for printing on same line #HACK
+import re #for regex validation
 
 #TODO: different checkin commands (instead of typitng anything)
 
@@ -172,17 +173,21 @@ class Delivery:
             return response 
                 
     def initial_correction_confirmed(self, input): 
-        self.order_details[self.order_detail_to_change] = input
-        
-        self.state = "CONFIRMATION"
-        return ("The \'%s\' field has been changed to \'%s\'.\n\n"
-            'Is the following delivery information correct? [yes/no]\n'
-            '\tNAME: %s\n'
-            '\tADDRESS: %s\n'
-            '\tPHONE: %s\n'
-            '\tITEM: %s'
-            ) % (self.order_detail_to_change, input, self.order_details['name'], self.order_details['address'], self.order_details['phone'], self.order_details['item'])
-        # return self.order_placed()
+        if self.correction_is_valid(self.order_detail_to_change, input): 
+            self.order_details[self.order_detail_to_change] = input
+            
+            self.state = "CONFIRMATION"
+            return ("The \'%s\' field has been changed to \'%s\'.\n\n"
+                'Is the following delivery information correct? [yes/no]\n'
+                '\tNAME: %s\n'
+                '\tADDRESS: %s\n'
+                '\tPHONE: %s\n'
+                '\tITEM: %s'
+                ) % (self.order_detail_to_change, input, self.order_details['name'], self.order_details['address'], self.order_details['phone'], self.order_details['item'])
+
+        else: 
+            return "Your input format for the \"%s\" field is invalid. Please try again." % self.order_detail_to_change
+            
 
     def order_placed(self): 
         """ Indicate an order has been properly placed into the system. """ 
@@ -289,3 +294,31 @@ class Delivery:
 
         num_days_later = random.randint(1, 5)
         return curr_date + datetime.timedelta(days=num_days_later)
+        
+        
+    def correction_is_valid(self, field, input):
+        """ Performs simple checks to see if the input is valid."""
+        
+        if field == "name": 
+            name_regex = r'[a-zA-Z \-]+'
+            if re.match(name_regex, input): 
+                return True
+            else: 
+                return False            
+                
+        elif field == "address":
+            address_regex = r'\d+ [a-zA-Z \.\,]+'
+            if re.match(address_regex, input): 
+                return True
+            else: 
+                return False
+            
+        elif field == "phone":
+            #checks if there is some digit 
+            return any(char.isdigit() for char in input)
+        
+        else: 
+            
+            #accept any input for 'item'
+            return True 
+        
