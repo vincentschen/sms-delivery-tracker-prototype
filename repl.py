@@ -8,15 +8,18 @@ class REPL(cmd.Cmd):
     prompt = "\n> "
     
     def preloop(self): 
-        print '\n', self.delivery.initial_prompt
+        print_red('\n' + self.delivery.initial_prompt)
 
     def default(self, line): 
         response = self.delivery.process_input(line)
-        print colored(response, 'red') 
+        print_red(response)
         
         if self.delivery.quitting:
             return True 
-            
+
+def print_red(text):
+    print colored(text, 'red')
+
 if __name__ == '__main__':
     repl = REPL()
     repl.cmdloop() 
