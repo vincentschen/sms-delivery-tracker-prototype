@@ -175,7 +175,7 @@ class Delivery:
         self.order_details[self.order_detail_to_change] = input
         
         self.state = "CONFIRMATION"
-        return ("Great! The \'%s\' field has been changed to \'%s\'.\n\n"
+        return ("The \'%s\' field has been changed to \'%s\'.\n\n"
             'Is the following delivery information correct? [yes/no]\n'
             '\tNAME: %s\n'
             '\tADDRESS: %s\n'
@@ -193,7 +193,7 @@ class Delivery:
         seconds_to_state_change = 3 * random.randint(3, 5)
         self.schedule_state_change(seconds_to_state_change, "ORDER_ACCEPTED")
 
-        return ('Wonderful! Please look forward to messages in the next few days regarding the progress of your order. '
+        return ('Please look forward to messages in the next few days regarding the progress of your order. '
             '[To check on status, please respond to this number with any text.]')
                 
     def order_accepted(self):
@@ -289,4 +289,3 @@ class Delivery:
 
         num_days_later = random.randint(1, 5)
         return curr_date + datetime.timedelta(days=num_days_later)
-        
