@@ -6,7 +6,6 @@ import threading # to run scheduling concurrently
 import sys #for printing on same line #HACK
 
 #TODO: different checkin commands (instead of typitng anything)
-#TODO: error messages for waiting in different states 
 
 class Delivery: 
     """
@@ -21,16 +20,16 @@ class Delivery:
     def __init__(self): 
         """Initializes placeholder and state values for the Delivery prototype. """
         # PLACEHOLDER VALUES for delivery information
-        self.app_name = "APP"
+        self.app_name = "DeliverSA"
         self.courier = {
             'name': 'Sneha',
-            'phone': 192857159
+            'phone': '+27 081 987 6543'
         }
         self.order_details = {
             "name": "Vincent",
             "item": "Toothbrush",
-            "address": "44 HELLO STREET",
-            "phone": 123456889
+            "address": "4 Main Road",
+            "phone": '+27 081 123 4567'
         }
         self.delivery_date = None
         
