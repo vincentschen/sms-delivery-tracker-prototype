@@ -1,5 +1,6 @@
 import cmd # for REPL loop framework 
 from delivery import *
+from vendor.termcolor import colored # ref: https://pypi.python.org/pypi/termcolor
 
 class REPL(cmd.Cmd):
     """Simple read, evaluate, print loop that uses imported Delivery class. to process information."""
@@ -11,7 +12,7 @@ class REPL(cmd.Cmd):
 
     def default(self, line): 
         response = self.delivery.process_input(line)
-        print response 
+        print colored(response, 'red') 
         
         if self.delivery.quitting:
             return True 
