@@ -5,6 +5,7 @@ import sched # to schedule steate changes (simulating times in which we are wait
 import threading # to run scheduling concurrently
 import sys #for printing on same line #HACK
 import re #for regex validation
+from vendor.termcolor import colored
 
 #TODO: different checkin commands (instead of typitng anything)
 
@@ -284,9 +285,12 @@ class Delivery:
     def change_state(self, new_state):
         self.is_waiting = False
         self.state = new_state
-        sys.stdout.write("Delivery updated!\n"
-        "Please respond to this number with any text to view your status."
-        "\n> ") #HACK: prompts input, but not actually in REPL
+        
+        text = ("Delivery updated!\n"
+         "Please respond to this number with any text to view your status.") #HACK: prompts input, but not actually in REPL
+        
+        text = colored(text, 'red') + "\n> " 
+        sys.stdout.write(text)
         sys.stdout.flush() #use stdout for same line in HACK
         
     def get_random_later_date(self, curr_date):
