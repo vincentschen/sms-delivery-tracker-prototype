@@ -265,6 +265,10 @@ class Delivery:
                 "If you have any issues, please call %s.") % self.courier['phone']
 
     def feedback(self, input):
+        if not input.isdigit(): 
+            #validation -- makes sure the input is only a number
+            return "Please respond with a value between 1 and 5, inclusive!"
+        
         possible_ratings = [1, 2, 3, 4, 5]
         if int(input) in possible_ratings: # validate rating input
             self.quitting = True 
