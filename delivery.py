@@ -7,8 +7,6 @@ import sys #for printing on same line #HACK
 import re #for regex validation
 from vendor.termcolor import colored
 
-#TODO: different checkin commands (instead of typitng anything)
-
 class Delivery: 
     """
     This class is used in conjunction with the REPL class to handle all logic 
@@ -39,7 +37,7 @@ class Delivery:
         self.state = "INITIAL"
         self.quitting = False
         self.order_detail_to_change = None # set to value when user requesting change
-        self.is_wating = False # boolean to indicate if currently waiting for state change
+        self.is_waiting = False # boolean to indicate if currently waiting for state change
 
         # instance of scheduler 
         self.sched = sched.scheduler(time.time, time.sleep)
@@ -48,9 +46,14 @@ class Delivery:
         self.initial_prompt = ('You have ordered \"%s\" with %s.\n'
             'Do you recognize this purchase? [yes/no]') % (self.order_details['item'], self.app_name)    
 
+        #DEBUG flag
+        self.DEBUG = False
     
     def process_input(self, input): 
         """ Handles all input in the REPL. """ 
+
+        if self.DEBUG:
+            print colored(self.state, 'green')
 
         response = ""
         # make inputs case-insensitive 
@@ -84,15 +87,13 @@ class Delivery:
                     "Please check back shortly for updates!")
             
             else: 
-                self.schedulerThread.join()
                 response = self.order_accepted()
                 
         elif self.state == "ORDER_PENDING":
-            self.schedulerThread.join()
             response = self.order_pending()
+            # self.schedulerThread.join()
             
         elif self.state == "ORDER_FAILED_FIXED":
-            self.schedulerThread.join()
             response = self.order_failed_fixed()
                 
         elif self.state == "ORDER_APPROACHING":
@@ -101,11 +102,9 @@ class Delivery:
                     "Please check back shortly for updates!")
             
             else: 
-                self.schedulerThread.join()
                 response = self.order_approaching()
             
         elif self.state == "ORDER_ARRIVED":
-            self.schedulerThread.join()
             response = self.order_arrived()
             
         elif self.state == "ARRIVAL_CONFIRMATION":
@@ -219,13 +218,15 @@ class Delivery:
     def order_pending(self): 
                 
         # simulate failed delivery 50% of the time for demo's sake
-        if random.random() < 0.5: # order failed
+        if random.random() < 7.0: # order failed
             
-            # simulate time it takes for delivery to be corrected
-            seconds_to_state_change = 3 * random.randint(3, 5)
-            self.schedule_state_change(seconds_to_state_change, "ORDER_FAILED_FIXED")
+            if not self.is_waiting: 
+                # simulate time it takes for delivery to be corrected
+                seconds_to_state_change = 3 * random.randint(3, 5)
+                self.schedule_state_change(seconds_to_state_change, "ORDER_FAILED_FIXED")
             
-            self.delivery_date = self.get_random_later_date(self.delivery_date)
+                self.delivery_date = self.get_random_later_date(self.delivery_date)
+                
             return ("Unfortunately, there are issues with your delivery. "
                 "%s noticed that your package was damaged, so we have stopped the delivery process.\n"
                 "Your package will be delayed until %s. Please call this number if you have any questions: %s"
@@ -235,12 +236,14 @@ class Delivery:
             return self.order_approaching()
 
     def order_failed_fixed(self): 
-        self.schedule_state_change(15, 'ORDER_APPROACHING')
+        if not self.is_waiting: 
+            self.schedule_state_change(15, 'ORDER_APPROACHING')
+        
         return ("We have corrected the delivery issue with your package. "
             "Please expect a a delivery on %s.") % str(self.delivery_date)
 
     def order_approaching(self):
-        self.schedule_state_change(5, "ORDER_ARRIVED")
+        self.schedule_state_change(15, "ORDER_ARRIVED")
         
         minutes_to_arrival = random.randint(5, 30)
         return ("Your package will arrive in %s minutes. "
@@ -290,8 +293,11 @@ class Delivery:
         self.is_waiting = False
         self.state = new_state
         
+        if self.DEBUG:
+            print colored(self.state, 'green') #DEBUG
+        
         text = ("Delivery updated!\n"
-         "Please respond to this number with any text to view your status.") #HACK: prompts input, but not actually in REPL
+         "Please respond to this number with any text to view your status.\n") #HACK: prompts input, but not actually in REPL
         
         text = colored(text, 'red') + "\n> " 
         sys.stdout.write(text)
