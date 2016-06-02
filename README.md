@@ -17,19 +17,15 @@ Some user flows have been randomized to simulate a more realistic experience.
 
 Please run the prototype multiple times in order to experience different flows. 
 
-# Install
-### .zip file download (if `git` not installed on system)
-  1. Paste this link into your browser 
+# Install (OS X)
+  1. Paste this link into your browser to download the `.zip` file.
 https://github.com/vincentschen/sms-delivery-tracker-prototype/archive/master.zip
 
-  2. In Unix terminal, navigate to the directory where you want to store these files. 
-  
-### Repository Clone 
-
-  2. To download the repository in your local directory:   
-  `git clone https://github.com/vincentschen/sms-delivery-tracker-prototype.git`
+  2. Move the folder to your Desktop.
   
 # Usage
-  1. Navigate to directory of repository in unix. 
-  2. To run: 
-  `python repl.py`
+  1. Open *Terminal*. You can do this by searching for "Terminal" in Spotlight. 
+  2. Input: `cd ~/Desktop/sms-delivery-tracker-prototype`  
+  3. Input: `python repl.py` 
+  
+Hit `CTRL + C` to force quit while the program is running.
